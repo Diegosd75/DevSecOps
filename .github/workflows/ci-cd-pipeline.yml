@@ -19,25 +19,51 @@ jobs:
         uses: bridgecrewio/checkov-action@v12
         with:
           directory: .
+          output_format: cli
 
       - name: Run Nuclei (DAST Scan)
-        uses: projectdiscovery/nuclei-action@v1
+        run: |
+          curl -sL https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei-linux-amd64.tar.gz -o nuclei.tar.gz
+          tar -xvzf nuclei.tar.gz
+          chmod +x nuclei
+          sudo mv nuclei /usr/local/bin/
+          nuclei -u https://example.com -o results/nuclei-results.txt
 
       - name: Run Gitleaks (Secret Scan)
-        uses: zricethezav/gitleaks-action@v1.6.0
+        uses: gitleaks/gitleaks-action@v2
 
       - name: Run Trivy (Container Scan)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'your-docker-image'
+          format: 'table'
 
       - name: Run Dependency Check (SCA)
         uses: dependency-check/Dependency-Check_Action@main
+        with:
+          format: 'XML'
+          out: 'results/'
 
       - name: Run Bearer (SAST Scan)
         uses: bearer/bearer-action@v2
 
-      - name: Upload results to DefectDojo
+      - name: Upload Checkov Results to DefectDojo
+        run: |
+          curl -X POST "https://3.135.211.4:8080/import-scan/" \
+            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=Checkov Scan" \
+            -F "file=@results/checkov-results.txt"
+
+      - name: Upload Nuclei Results to DefectDojo
+        run: |
+          curl -X POST "https://3.135.211.4:8080/import-scan/" \
+            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=Nuclei Scan" \
+            -F "file=@results/nuclei-results.txt"
+
+      - name: Upload Dependency Check Results to DefectDojo
         run: |
           curl -X POST "https://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
