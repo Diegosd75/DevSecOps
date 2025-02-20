@@ -1,0 +1,46 @@
+name: DevSecOps Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Run Checkov (IaC Scan)
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+
+      - name: Run Nuclei (DAST Scan)
+        uses: projectdiscovery/nuclei-action@v1
+
+      - name: Run Gitleaks (Secret Scan)
+        uses: zricethezav/gitleaks-action@v1.6.0
+
+      - name: Run Trivy (Container Scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'your-docker-image'
+
+      - name: Run Dependency Check (SCA)
+        uses: dependency-check/Dependency-Check_Action@main
+
+      - name: Run Bearer (SAST Scan)
+        uses: bearer/bearer-action@v2
+
+      - name: Upload results to DefectDojo
+        run: |
+          curl -X POST "https://3.135.211.4:8080/import-scan/" \
+            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=Dependency Check" \
+            -F "file=@results/dependency-check-report.xml"
