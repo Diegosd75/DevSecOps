@@ -40,7 +40,7 @@ jobs:
           nuclei -u https://example.com -o results/nuclei-results.txt
 
       - name: Run Gitleaks (Secret Scan)
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v1.6.0
 
       - name: Build Vulnerable Docker Image
         run: |
