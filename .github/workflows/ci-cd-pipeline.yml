@@ -42,15 +42,16 @@ jobs:
       - name: Run Gitleaks (Secret Scan)
         uses: gitleaks/gitleaks-action@v2
 
-      - name: Build Docker Image
+      - name: Build Vulnerable Docker Image
         run: |
-          docker build -t my-secure-image:latest .
+          docker build -t vulnerable-image:latest .
 
       - name: Run Trivy (Container Scan)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'my-secure-image:latest'
+          image-ref: 'vulnerable-image:latest'
           format: 'table'
+          output: 'results/trivy-results.txt'
 
       - name: Run Dependency Check (SCA)
         uses: dependency-check/Dependency-Check_Action@main
@@ -76,6 +77,14 @@ jobs:
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Nuclei Scan" \
             -F "file=@results/nuclei-results.txt"
+
+      - name: Upload Trivy Results to DefectDojo
+        run: |
+          curl -X POST "https://3.135.211.4:8080/import-scan/" \
+            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=Trivy Scan" \
+            -F "file=@results/trivy-results.txt"
 
       - name: Upload Dependency Check Results to DefectDojo
         run: |
