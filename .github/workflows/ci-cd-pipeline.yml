@@ -42,10 +42,14 @@ jobs:
       - name: Run Gitleaks (Secret Scan)
         uses: gitleaks/gitleaks-action@v2
 
+      - name: Build Docker Image
+        run: |
+          docker build -t my-secure-image:latest .
+
       - name: Run Trivy (Container Scan)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'your-docker-image'
+          image-ref: 'my-secure-image:latest'
           format: 'table'
 
       - name: Run Dependency Check (SCA)
