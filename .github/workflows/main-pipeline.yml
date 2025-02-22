@@ -20,8 +20,8 @@ jobs:
 
       - name: Prepare Results Directory
         run: |
-          sudo mkdir -p results
-          sudo chmod -R 777 results
+          mkdir -p results
+          chmod -R 777 results
 
       - name: Run Checkov (IaC Scan)
         uses: bridgecrewio/checkov-action@v12
@@ -31,10 +31,10 @@ jobs:
           output_file_path: results/checkov-results.txt
         continue-on-error: true
 
-      - name: Install Go
+      - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y golang
+          sudo apt-get install -y golang jq
 
       - name: Install Nuclei
         run: |
@@ -43,8 +43,7 @@ jobs:
 
       - name: Run Nuclei (DAST Scan)
         run: |
-          nuclei -u https://example.com -o results/nuclei-results.txt
-        continue-on-error: true
+          nuclei -u https://example.com -o results/nuclei-results.txt || true
 
       - name: Run Gitleaks (Secret Scan)
         uses: gitleaks/gitleaks-action@v1.6.0
@@ -92,50 +91,14 @@ jobs:
             exit 1
           fi
 
-      - name: Upload Checkov Results to DefectDojo
+      - name: Upload Scan Results to DefectDojo
         run: |
-          curl -X POST "http://3.135.211.4:8080/import-scan/" \
-            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
-            -H "Content-Type: multipart/form-data" \
-            -F "scan_type=Checkov Scan" \
-            -F "file=@results/checkov-results.txt"
-
-      - name: Upload Nuclei Results to DefectDojo
-        run: |
-          curl -X POST "http://3.135.211.4:8080/import-scan/" \
-            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
-            -H "Content-Type: multipart/form-data" \
-            -F "scan_type=Nuclei Scan" \
-            -F "file=@results/nuclei-results.txt"
-
-      - name: Upload Gitleaks Results to DefectDojo
-        run: |
-          curl -X POST "http://3.135.211.4:8080/import-scan/" \
-            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
-            -H "Content-Type: multipart/form-data" \
-            -F "scan_type=Gitleaks Scan" \
-            -F "file=@results/gitleaks-report.json"
-
-      - name: Upload Trivy Results to DefectDojo
-        run: |
-          curl -X POST "http://3.135.211.4:8080/import-scan/" \
-            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
-            -H "Content-Type: multipart/form-data" \
-            -F "scan_type=Trivy Scan" \
-            -F "file=@results/trivy-results.json"
-
-      - name: Upload Dependency Check Results to DefectDojo
-        run: |
-          curl -X POST "http://3.135.211.4:8080/import-scan/" \
-            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
-            -H "Content-Type: multipart/form-data" \
-            -F "scan_type=Dependency Check" \
-            -F "file=@results/dependency-check-report.xml"
-
-      - name: Upload Bearer Results to DefectDojo
-        run: |
-          curl -X POST "http://3.135.211.4:8080/import-scan/" \
-            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
-            -H "Content-Type: multipart/form-data" \
-            -F "scan_type=Bearer Scan" \
-            -F "file=@results/bearer-results.json"
+          for file in checkov-results.txt nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
+            scan_type=$(echo "$file" | sed 's/-results.*//g' | sed 's/.json//g' | sed 's/.txt//g' | sed 's/.xml//g' | tr '-' ' ' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
+            echo "Uploading $file as $scan_type Scan"
+            curl -X POST "http://3.135.211.4:8080/import-scan/" \
+              -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+              -H "Content-Type: multipart/form-data" \
+              -F "scan_type=$scan_type Scan" \
+              -F "file=@results/$file"
+          done
