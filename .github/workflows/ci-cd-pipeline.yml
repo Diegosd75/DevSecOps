@@ -23,6 +23,7 @@ jobs:
         with:
           directory: .
           output_format: cli
+          output_file_path: results/checkov-results.txt
 
       - name: Install Go
         run: |
@@ -41,6 +42,8 @@ jobs:
 
       - name: Run Gitleaks (Secret Scan)
         uses: gitleaks/gitleaks-action@v1.6.0
+        with:
+          output: results/gitleaks-report.json
 
       - name: Build Vulnerable Docker Image
         run: |
@@ -50,17 +53,19 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'vulnerable-image:latest'
-          format: 'table'
-          output: 'results/trivy-results.txt'
+          format: 'json'
+          output: 'results/trivy-results.json'
 
       - name: Run Dependency Check (SCA)
         uses: dependency-check/Dependency-Check_Action@main
         with:
           format: 'XML'
-          out: 'results/'
+          out: 'results/dependency-check-report.xml'
 
       - name: Run Bearer (SAST Scan)
         uses: bearer/bearer-action@v2
+        with:
+          output: results/bearer-results.json
 
       - name: Upload Checkov Results to DefectDojo
         run: |
@@ -78,13 +83,21 @@ jobs:
             -F "scan_type=Nuclei Scan" \
             -F "file=@results/nuclei-results.txt"
 
+      - name: Upload Gitleaks Results to DefectDojo
+        run: |
+          curl -X POST "https://3.135.211.4:8080/import-scan/" \
+            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=Gitleaks Scan" \
+            -F "file=@results/gitleaks-report.json"
+
       - name: Upload Trivy Results to DefectDojo
         run: |
           curl -X POST "https://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Trivy Scan" \
-            -F "file=@results/trivy-results.txt"
+            -F "file=@results/trivy-results.json"
 
       - name: Upload Dependency Check Results to DefectDojo
         run: |
@@ -93,3 +106,11 @@ jobs:
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Dependency Check" \
             -F "file=@results/dependency-check-report.xml"
+
+      - name: Upload Bearer Results to DefectDojo
+        run: |
+          curl -X POST "https://3.135.211.4:8080/import-scan/" \
+            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=Bearer Scan" \
+            -F "file=@results/bearer-results.json"
