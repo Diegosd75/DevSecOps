@@ -1,20 +1,14 @@
-# Usamos una imagen base vulnerable con múltiples CVEs
-FROM python:3.6
+FROM python:3.9
 
-# Exponemos variables de entorno sensibles (⚠️ Mala práctica)
-ENV SECRET_KEY="SuperSecret123"
-ENV DATABASE_URL="mysql://root:password@db"
+# 🔴 Variables de entorno con credenciales expuestas
+ENV DB_USER="admin"
+ENV DB_PASS="password123"
+ENV SECRET_KEY="super_secret_key"
 
-# Instalamos paquetes innecesarios y potencialmente peligrosos (⚠️ Red flag para Trivy)
-RUN apt-get update && apt-get install -y \
-    curl \
-    netcat \
-    vim \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copiamos el código de la aplicación
 WORKDIR /app
-COPY main.py .
 
-# Ejecutamos el servidor como root (⚠️ Mala práctica)
+COPY main.py /app
+
+RUN pip install flask
+
 CMD ["python", "main.py"]
