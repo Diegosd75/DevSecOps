@@ -78,9 +78,23 @@ jobs:
           output: results/bearer-results.json
         continue-on-error: true
 
+      - name: Verify Scan Results Before Upload
+        run: |
+          missing_files=0
+          for file in checkov-results.txt nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
+            if [ ! -f results/$file ]; then
+              echo "❌ Error: Falta el archivo results/$file"
+              missing_files=1
+            fi
+          done
+          if [ $missing_files -eq 1 ]; then
+            echo "❌ Error crítico: No se generaron todos los archivos esperados."
+            exit 1
+          fi
+
       - name: Upload Checkov Results to DefectDojo
         run: |
-          curl --tlsv1.2 -k -X POST "http://3.135.211.4:8080/import-scan/" \
+          curl -X POST "http://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Checkov Scan" \
@@ -88,7 +102,7 @@ jobs:
 
       - name: Upload Nuclei Results to DefectDojo
         run: |
-          curl --tlsv1.2 -X POST "http://3.135.211.4:8080/import-scan/" \
+          curl -X POST "http://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Nuclei Scan" \
@@ -96,7 +110,7 @@ jobs:
 
       - name: Upload Gitleaks Results to DefectDojo
         run: |
-          curl --tlsv1.2 -X POST "http://3.135.211.4:8080/import-scan/" \
+          curl -X POST "http://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Gitleaks Scan" \
@@ -104,7 +118,7 @@ jobs:
 
       - name: Upload Trivy Results to DefectDojo
         run: |
-          curl --tlsv1.2 -X POST "http://3.135.211.4:8080/import-scan/" \
+          curl -X POST "http://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Trivy Scan" \
@@ -112,7 +126,7 @@ jobs:
 
       - name: Upload Dependency Check Results to DefectDojo
         run: |
-          curl --tlsv1.2 -X POST "http://3.135.211.4:8080/import-scan/" \
+          curl -X POST "http://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Dependency Check" \
@@ -120,7 +134,7 @@ jobs:
 
       - name: Upload Bearer Results to DefectDojo
         run: |
-          curl --tlsv1.2 -X POST "http://3.135.211.4:8080/import-scan/" \
+          curl -X POST "http://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Bearer Scan" \
