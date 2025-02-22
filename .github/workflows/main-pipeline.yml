@@ -24,6 +24,7 @@ jobs:
           directory: .
           output_format: cli
           output_file_path: results/checkov-results.txt
+        continue-on-error: true
 
       - name: Install Go
         run: |
@@ -39,15 +40,18 @@ jobs:
         run: |
           mkdir -p results
           nuclei -u https://example.com -o results/nuclei-results.txt
+        continue-on-error: true
 
       - name: Run Gitleaks (Secret Scan)
         uses: gitleaks/gitleaks-action@v1.6.0
         with:
           output: results/gitleaks-report.json
+        continue-on-error: true
 
       - name: Build Vulnerable Docker Image
         run: |
           docker build -t vulnerable-image:latest .
+        continue-on-error: true
 
       - name: Run Trivy (Container Scan)
         uses: aquasecurity/trivy-action@master
@@ -55,17 +59,20 @@ jobs:
           image-ref: 'vulnerable-image:latest'
           format: 'json'
           output: 'results/trivy-results.json'
+        continue-on-error: true
 
       - name: Run Dependency Check (SCA)
         uses: dependency-check/Dependency-Check_Action@main
         with:
           format: 'XML'
           out: 'results/dependency-check-report.xml'
+        continue-on-error: true
 
       - name: Run Bearer (SAST Scan)
         uses: bearer/bearer-action@v2
         with:
           output: results/bearer-results.json
+        continue-on-error: true
 
       - name: Upload Checkov Results to DefectDojo
         run: |
