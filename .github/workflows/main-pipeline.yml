@@ -30,78 +30,50 @@ jobs:
           output_format: cli
           output_file_path: results/checkov-results.txt
         continue-on-error: true
-        if: always()
-      
-      - name: Validate Checkov Output
+
+      - name: Verify Checkov Execution
         run: |
           if [ -f results/checkov-results.txt ]; then
-            echo "✅ Checkov ejecutado correctamente."
+            echo "✅ Checkov generó el archivo correctamente."
           else
-            echo "❌ Error: Checkov no generó un archivo de salida." && exit 1
+            echo "❌ Error: Checkov no generó un archivo de salida."
+            ls -l results/
+            find . -name "checkov-results.txt"
+            exit 1
           fi
 
       - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y golang jq
-        if: always()
 
       - name: Install Nuclei
         run: |
           go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
           sudo cp ~/go/bin/nuclei /usr/local/bin/nuclei
-        if: always()
 
       - name: Run Nuclei (DAST Scan)
         run: |
           nuclei -u https://example.com -o results/nuclei-results.txt || true
-        if: always()
-      
-      - name: Validate Nuclei Output
-        run: |
-          if [ -f results/nuclei-results.txt ]; then
-            echo "✅ Nuclei ejecutado correctamente."
-          else
-            echo "❌ Error: Nuclei no generó un archivo de salida." && exit 1
-          fi
 
       - name: Run Gitleaks (Secret Scan)
         uses: gitleaks/gitleaks-action@v1.6.0
         with:
           output: results/gitleaks-report.json
         continue-on-error: true
-        if: always()
-      
-      - name: Validate Gitleaks Output
-        run: |
-          if [ -f results/gitleaks-report.json ]; then
-            echo "✅ Gitleaks ejecutado correctamente."
-          else
-            echo "❌ Error: Gitleaks no generó un archivo de salida." && exit 1
-          fi
 
-      - name: Build Docker Image
+      - name: Build Vulnerable Docker Image
         run: |
-          docker build -t my-application:latest .
+          docker build -t vulnerable-image:latest .
         continue-on-error: true
-        if: always()
 
       - name: Run Trivy (Container Scan)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'my-application:latest'
+          image-ref: 'vulnerable-image:latest'
           format: 'json'
           output: 'results/trivy-results.json'
         continue-on-error: true
-        if: always()
-      
-      - name: Validate Trivy Output
-        run: |
-          if [ -f results/trivy-results.json ]; then
-            echo "✅ Trivy ejecutado correctamente."
-          else
-            echo "❌ Error: Trivy no generó un archivo de salida." && exit 1
-          fi
 
       - name: Run Dependency Check (SCA)
         uses: dependency-check/Dependency-Check_Action@main
@@ -109,43 +81,35 @@ jobs:
           format: 'XML'
           out: 'results/dependency-check-report.xml'
         continue-on-error: true
-        if: always()
-      
-      - name: Validate Dependency Check Output
-        run: |
-          if [ -f results/dependency-check-report.xml ]; then
-            echo "✅ Dependency Check ejecutado correctamente."
-          else
-            echo "❌ Error: Dependency Check no generó un archivo de salida." && exit 1
-          fi
 
       - name: Run Bearer (SAST Scan)
         uses: bearer/bearer-action@v2
         with:
           output: results/bearer-results.json
         continue-on-error: true
-        if: always()
-      
-      - name: Validate Bearer Output
+
+      - name: Verify Scan Results Before Upload
         run: |
-          if [ -f results/bearer-results.json ]; then
-            echo "✅ Bearer ejecutado correctamente."
-          else
-            echo "❌ Error: Bearer no generó un archivo de salida." && exit 1
+          missing_files=0
+          for file in checkov-results.txt nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
+            if [ ! -f results/$file ]; then
+              echo "❌ Error: Falta el archivo results/$file"
+              missing_files=1
+            fi
+          done
+          if [ $missing_files -eq 1 ]; then
+            echo "❌ Error crítico: No se generaron todos los archivos esperados."
+            exit 1
           fi
 
       - name: Upload Scan Results to DefectDojo
         run: |
           for file in checkov-results.txt nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
-            if [ -f results/$file ]; then
-              scan_type=$(echo "$file" | sed 's/-results.*//g' | sed 's/.json//g' | sed 's/.txt//g' | sed 's/.xml//g' | tr '-' ' ' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
-              echo "Uploading $file as $scan_type Scan"
-              curl -X POST "http://3.135.211.4:8080/import-scan/" \
-                -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
-                -H "Content-Type: multipart/form-data" \
-                -F "scan_type=$scan_type Scan" \
-                -F "file=@results/$file"
-            else
-              echo "❌ Error: El archivo $file no está presente, omitiendo carga."
-            fi
+            scan_type=$(echo "$file" | sed 's/-results.*//g' | sed 's/.json//g' | sed 's/.txt//g' | sed 's/.xml//g' | tr '-' ' ' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
+            echo "Uploading $file as $scan_type Scan"
+            curl -X POST "http://3.135.211.4:8080/import-scan/" \
+              -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+              -H "Content-Type: multipart/form-data" \
+              -F "scan_type=$scan_type Scan" \
+              -F "file=@results/$file"
           done
