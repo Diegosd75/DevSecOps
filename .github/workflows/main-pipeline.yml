@@ -61,18 +61,21 @@ jobs:
 
       - name: Run Gitleaks (Secret Scan)
         uses: gitleaks/gitleaks-action@v2.3.7
+        with:
+          config: .gitleaks.toml
+          report-format: json
+          report-path: results/gitleaks-report.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          args: --config=.gitleaks.toml --report-format=json --report-path=results/gitleaks-report.json
         continue-on-error: true
 
       - name: Verify Gitleaks Execution
         run: |
-          if [ -f results/gitleaks-report.json ]; then
+          if [ -s results/gitleaks-report.json ]; then
             echo "✅ Gitleaks generó el archivo correctamente."
+            cat results/gitleaks-report.json | jq '.'
           else
-            echo "❌ Error: Gitleaks no generó un archivo de salida."
+            echo "❌ Error: Gitleaks no generó un archivo de salida válido."
             ls -l results/
             find . -name "gitleaks-report.json"
             exit 1
