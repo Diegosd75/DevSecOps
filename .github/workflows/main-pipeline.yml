@@ -51,15 +51,15 @@ jobs:
           output: results/gitleaks-report.json
         continue-on-error: true
 
-      - name: Build Vulnerable Docker Image
+      - name: Build Docker Image
         run: |
-          docker build -t vulnerable-image:latest .
+          docker build -t my-application:latest .
         continue-on-error: true
 
       - name: Run Trivy (Container Scan)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'vulnerable-image:latest'
+          image-ref: 'my-application:latest'
           format: 'json'
           output: 'results/trivy-results.json'
         continue-on-error: true
