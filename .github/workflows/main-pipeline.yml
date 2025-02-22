@@ -80,7 +80,7 @@ jobs:
 
       - name: Upload Checkov Results to DefectDojo
         run: |
-          curl --tlsv1.2 -X POST "https://3.135.211.4:8080/import-scan/" \
+          curl --tlsv1.2 -k -X POST "https://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Checkov Scan" \
