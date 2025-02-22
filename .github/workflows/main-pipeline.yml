@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Prepare Results Directory
         run: |
@@ -27,18 +29,18 @@ jobs:
         uses: bridgecrewio/checkov-action@v12
         with:
           directory: .
-          output_format: json
-          output_file_path: results/checkov-results.json
+          output_format: cli
+          output_file_path: results/checkov-results.txt
         continue-on-error: true
 
       - name: Verify Checkov Execution
         run: |
-          sleep 2
-          ls -lah results/
-          if [ -s results/checkov-results.json ]; then
+          if [ -f results/checkov-results.txt ]; then
             echo "✅ Checkov generó el archivo correctamente."
           else
-            echo "❌ Error: Checkov no generó un archivo de salida o está vacío."
+            echo "❌ Error: Checkov no generó un archivo de salida."
+            ls -l results/
+            find . -name "checkov-results.txt"
             exit 1
           fi
 
@@ -57,10 +59,23 @@ jobs:
           nuclei -u https://example.com -o results/nuclei-results.txt || true
 
       - name: Run Gitleaks (Secret Scan)
-        uses: gitleaks/gitleaks-action@v1.6.0
+        uses: gitleaks/gitleaks-action@v2.3.7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          output: results/gitleaks-report.json
+          args: --config=.gitleaks.toml --report-format=json --report-path=results/gitleaks-report.json
         continue-on-error: true
+
+      - name: Verify Gitleaks Execution
+        run: |
+          if [ -f results/gitleaks-report.json ]; then
+            echo "✅ Gitleaks generó el archivo correctamente."
+          else
+            echo "❌ Error: Gitleaks no generó un archivo de salida."
+            ls -l results/
+            find . -name "gitleaks-report.json"
+            exit 1
+          fi
 
       - name: Build Vulnerable Docker Image
         run: |
@@ -91,9 +106,9 @@ jobs:
       - name: Verify Scan Results Before Upload
         run: |
           missing_files=0
-          for file in checkov-results.json nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
-            if [ ! -s results/$file ]; then
-              echo "❌ Error: Falta el archivo results/$file o está vacío."
+          for file in checkov-results.txt nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
+            if [ ! -f results/$file ]; then
+              echo "❌ Error: Falta el archivo results/$file"
               missing_files=1
             fi
           done
@@ -104,7 +119,7 @@ jobs:
 
       - name: Upload Scan Results to DefectDojo
         run: |
-          for file in checkov-results.json nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
+          for file in checkov-results.txt nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
             scan_type=$(echo "$file" | sed 's/-results.*//g' | sed 's/.json//g' | sed 's/.txt//g' | sed 's/.xml//g' | tr '-' ' ' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
             echo "Uploading $file as $scan_type Scan"
             curl -X POST "http://3.135.211.4:8080/import-scan/" \
