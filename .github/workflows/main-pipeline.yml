@@ -80,7 +80,7 @@ jobs:
 
       - name: Upload Checkov Results to DefectDojo
         run: |
-          curl --tlsv1.2 -k -X POST "https://3.135.211.4:8080/import-scan/" \
+          curl --tlsv1.2 -k -X POST "http://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Checkov Scan" \
@@ -88,7 +88,7 @@ jobs:
 
       - name: Upload Nuclei Results to DefectDojo
         run: |
-          curl --tlsv1.2 -X POST "https://3.135.211.4:8080/import-scan/" \
+          curl --tlsv1.2 -X POST "http://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Nuclei Scan" \
@@ -96,7 +96,7 @@ jobs:
 
       - name: Upload Gitleaks Results to DefectDojo
         run: |
-          curl --tlsv1.2 -X POST "https://3.135.211.4:8080/import-scan/" \
+          curl --tlsv1.2 -X POST "http://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Gitleaks Scan" \
@@ -104,7 +104,7 @@ jobs:
 
       - name: Upload Trivy Results to DefectDojo
         run: |
-          curl --tlsv1.2 -X POST "https://3.135.211.4:8080/import-scan/" \
+          curl --tlsv1.2 -X POST "http://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Trivy Scan" \
@@ -112,7 +112,7 @@ jobs:
 
       - name: Upload Dependency Check Results to DefectDojo
         run: |
-          curl --tlsv1.2 -X POST "https://3.135.211.4:8080/import-scan/" \
+          curl --tlsv1.2 -X POST "http://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Dependency Check" \
@@ -120,7 +120,7 @@ jobs:
 
       - name: Upload Bearer Results to DefectDojo
         run: |
-          curl --tlsv1.2 -X POST "https://3.135.211.4:8080/import-scan/" \
+          curl --tlsv1.2 -X POST "http://3.135.211.4:8080/import-scan/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
             -F "scan_type=Bearer Scan" \
