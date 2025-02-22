@@ -1,0 +1,116 @@
+name: DevSecOps Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Run Checkov (IaC Scan)
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          output_format: cli
+          output_file_path: results/checkov-results.txt
+
+      - name: Install Go
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y golang
+
+      - name: Install Nuclei
+        run: |
+          go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+          sudo cp ~/go/bin/nuclei /usr/local/bin/nuclei
+
+      - name: Run Nuclei (DAST Scan)
+        run: |
+          mkdir -p results
+          nuclei -u https://example.com -o results/nuclei-results.txt
+
+      - name: Run Gitleaks (Secret Scan)
+        uses: gitleaks/gitleaks-action@v1.6.0
+        with:
+          output: results/gitleaks-report.json
+
+      - name: Build Vulnerable Docker Image
+        run: |
+          docker build -t vulnerable-image:latest .
+
+      - name: Run Trivy (Container Scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'vulnerable-image:latest'
+          format: 'json'
+          output: 'results/trivy-results.json'
+
+      - name: Run Dependency Check (SCA)
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          format: 'XML'
+          out: 'results/dependency-check-report.xml'
+
+      - name: Run Bearer (SAST Scan)
+        uses: bearer/bearer-action@v2
+        with:
+          output: results/bearer-results.json
+
+      - name: Upload Checkov Results to DefectDojo
+        run: |
+          curl -X POST "https://3.135.211.4:8080/import-scan/" \
+            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=Checkov Scan" \
+            -F "file=@results/checkov-results.txt"
+
+      - name: Upload Nuclei Results to DefectDojo
+        run: |
+          curl -X POST "https://3.135.211.4:8080/import-scan/" \
+            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=Nuclei Scan" \
+            -F "file=@results/nuclei-results.txt"
+
+      - name: Upload Gitleaks Results to DefectDojo
+        run: |
+          curl -X POST "https://3.135.211.4:8080/import-scan/" \
+            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=Gitleaks Scan" \
+            -F "file=@results/gitleaks-report.json"
+
+      - name: Upload Trivy Results to DefectDojo
+        run: |
+          curl -X POST "https://3.135.211.4:8080/import-scan/" \
+            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=Trivy Scan" \
+            -F "file=@results/trivy-results.json"
+
+      - name: Upload Dependency Check Results to DefectDojo
+        run: |
+          curl -X POST "https://3.135.211.4:8080/import-scan/" \
+            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=Dependency Check" \
+            -F "file=@results/dependency-check-report.xml"
+
+      - name: Upload Bearer Results to DefectDojo
+        run: |
+          curl -X POST "https://3.135.211.4:8080/import-scan/" \
+            -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=Bearer Scan" \
+            -F "file=@results/bearer-results.json"
