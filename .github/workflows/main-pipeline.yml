@@ -40,15 +40,20 @@ jobs:
 
       - name: Verificar conexión con DefectDojo
         run: |
-          curl -X GET "http://3.135.211.4:8080/api/v2/engagements/" \
+          curl -X GET "${{ secrets.DEFECTDOJO_URL }}/api/v2/engagements/" \
             -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
             -H "Accept: application/json"
+
+      - name: Depuración - Verificar URL de DefectDojo
+        run: |
+          echo "DefectDojo URL: ${{ secrets.DEFECTDOJO_URL }}"
+          echo "Comprobando conexión a: ${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/"
 
       - name: Upload Checkov Report to DefectDojo
         uses: ivanamat/defectdojo-import-scan@v1
         with:
           token: ${{ secrets.DEFECTDOJO_API_KEY }}
-          defectdojo_url: ${{ secrets.DEFECTDOJO_URL }}
+          defectdojo_url: ${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/
           file: results/checkov-results.json
           scan_type: Checkov Scan
           engagement: ${{ secrets.DEFECTDOJO_ENGAGEMENT_ID }}
