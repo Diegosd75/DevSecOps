@@ -17,9 +17,13 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Prepare Results Directory
-        run: mkdir -p results
+        run: |
+          mkdir -p results
+          chmod -R 777 results
 
       - name: Run Checkov (IaC Scan)
         uses: bridgecrewio/checkov-action@v12
@@ -31,16 +35,81 @@ jobs:
 
       - name: Verify Checkov Execution
         run: |
-          if [ ! -s results/checkov-results.json ]; then
-            echo "❌ Error: El archivo checkov-results.json no existe o está vacío."
-            exit 1
+          if [ -s results/checkov-results.json ]; then
+            echo "✅ Checkov generó el archivo correctamente."
+            cat results/checkov-results.json | jq '.'
           else
-            echo "✅ Archivo encontrado, procediendo con la carga."
+            echo "❌ Error: Checkov no generó un archivo de salida válido."
+            ls -l results/
+            find . -name "checkov-results.json"
+            exit 1
           fi
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y golang jq
+
+      - name: Install Nuclei
+        run: |
+          go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+          sudo cp ~/go/bin/nuclei /usr/local/bin/nuclei
+
+      - name: Run Nuclei (DAST Scan)
+        run: |
+          nuclei -u https://example.com -o results/nuclei-results.txt || true
+
+      - name: Run Gitleaks (Secret Scan)
+        uses: gitleaks/gitleaks-action@v2.3.7
+        with:
+          config: .gitleaks.toml
+          report-format: json
+          report-path: results/gitleaks-report.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Verify Gitleaks Execution
+        run: |
+          if [ -s results/gitleaks-report.json ]; then
+            echo "✅ Gitleaks generó el archivo correctamente."
+            cat results/gitleaks-report.json | jq '.'
+          else
+            echo "❌ Error: Gitleaks no generó un archivo de salida válido."
+            ls -l results/
+            find . -name "gitleaks-report.json"
+            exit 1
+          fi
+
+      - name: Build Vulnerable Docker Image
+        run: |
+          docker build -t vulnerable-image:latest .
+        continue-on-error: true
+
+      - name: Run Trivy (Container Scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'vulnerable-image:latest'
+          format: 'json'
+          output: 'results/trivy-results.json'
+        continue-on-error: true
+
+      - name: Run Dependency Check (SCA)
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          format: 'XML'
+          out: 'results/dependency-check-report.xml'
+        continue-on-error: true
+
+      - name: Run Bearer (SAST Scan)
+        uses: bearer/bearer-action@v2
+        with:
+          output: results/bearer-results.json
+        continue-on-error: true
 
       - name: Obtener Product ID manualmente
         run: |
-          PRODUCT_ID=1
+          PRODUCT_ID=<REEMPLAZA_CON_EL_ID_DEL_PRODUCTO>
           echo "PRODUCT_ID=$PRODUCT_ID" >> $GITHUB_ENV
           sleep 2
 
@@ -58,14 +127,31 @@ jobs:
           echo "ENGAGEMENT_ID=$ENGAGEMENT_ID" >> $GITHUB_ENV
           sleep 5
 
-      - name: Upload Checkov Report to DefectDojo
-        uses: ivanamat/defectdojo-import-scan@v1
-        with:
-          token: 1c6dca9f2b8f4c73c23564e9ccdb20f356f2f580
-          defectdojo_url: http://3.135.211.4:8080/api/v2/import-scan/
-          file: results/checkov-results.json
-          scan_type: Checkov Scan
-          engagement: ${{ env.ENGAGEMENT_ID }}
+      - name: Verify Scan Results Before Upload
+        run: |
+          missing_files=0
+          for file in checkov-results.json nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
+            if [ ! -s results/$file ]; then
+              echo "❌ Error: Falta el archivo results/$file o está vacío."
+              missing_files=1
+            fi
+          done
+          if [ $missing_files -eq 1 ]; then
+            echo "❌ Error crítico: No se generaron todos los archivos esperados."
+            exit 1
+          fi
+
+      - name: Upload Scan Results to DefectDojo
+        run: |
+          for file in checkov-results.json nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
+            scan_type=$(echo "$file" | sed 's/-results.*//g' | sed 's/.json//g' | sed 's/.txt//g' | sed 's/.xml//g' | tr '-' ' ' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
+            echo "Uploading $file as $scan_type Scan"
+            curl -X POST "http://3.135.211.4:8080/import-scan/" \
+              -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
+              -H "Content-Type: multipart/form-data" \
+              -F "scan_type=$scan_type Scan" \
+              -F "file=@results/$file"
+          done
 
       - name: Confirmar éxito de importación
         run: |
