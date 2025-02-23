@@ -49,26 +49,28 @@ jobs:
           PRODUCT_ID=$(curl -s -X GET "http://3.135.211.4:8080/api/v2/products/" \
             -H "Authorization: Token 1c6dca9f2b8f4c73c23564e9ccdb20f356f2f580" \
             -H "Accept: application/json" | jq -r '.results[0].id')
+          if [ -z "$PRODUCT_ID" ] || [ "$PRODUCT_ID" == "null" ]; then
+            echo "⚠️ No se encontró un producto, creando uno nuevo."
+            RESPONSE=$(curl -s -X POST "http://3.135.211.4:8080/api/v2/products/" \
+              -H "Authorization: Token 1c6dca9f2b8f4c73c23564e9ccdb20f356f2f580" \
+              -H "Content-Type: application/json" \
+              -d '{"name": "Producto Automático", "description": "Producto creado desde pipeline", "prod_type": 1}')
+            PRODUCT_ID=$(echo $RESPONSE | jq -r '.id')
+          fi
+          if [ -z "$PRODUCT_ID" ] || [ "$PRODUCT_ID" == "null" ]; then
+            echo "❌ Error: No se pudo obtener o crear un Product ID válido."
+            exit 1
+          fi
           echo "PRODUCT_ID=$PRODUCT_ID" >> $GITHUB_ENV
+          sleep 5
 
       - name: Crear Engagement si no existe
         run: |
-          if [ -z "$PRODUCT_ID" ] || [ "$PRODUCT_ID" == "null" ]; then
-            echo "❌ Error: No se encontró un Product ID válido."
-            exit 1
-          fi
           RESPONSE=$(curl -s -X POST "http://3.135.211.4:8080/api/v2/engagements/" \
             -H "Authorization: Token 1c6dca9f2b8f4c73c23564e9ccdb20f356f2f580" \
             -H "Content-Type: application/json" \
             -d "{\"name\": \"Engagement Automático\", \"product\": $PRODUCT_ID, \"lead\": 1, \"status\": \"In Progress\", \"target_start\": \"2025-02-23\", \"target_end\": \"2025-03-01\", \"engagement_type\": \"CI/CD\"}")
-          echo "Engagement creado: $RESPONSE"
-          sleep 5
-
-      - name: Obtener Engagement ID
-        run: |
-          ENGAGEMENT_ID=$(curl -s -X GET "http://3.135.211.4:8080/api/v2/engagements/" \
-            -H "Authorization: Token 1c6dca9f2b8f4c73c23564e9ccdb20f356f2f580" \
-            -H "Accept: application/json" | jq -r '.results[0].id')
+          ENGAGEMENT_ID=$(echo $RESPONSE | jq -r '.id')
           if [ -z "$ENGAGEMENT_ID" ] || [ "$ENGAGEMENT_ID" == "null" ]; then
             echo "❌ Error: No se pudo obtener el Engagement ID."
             exit 1
