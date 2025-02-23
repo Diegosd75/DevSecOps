@@ -43,7 +43,7 @@ jobs:
         uses: ivanamat/defectdojo-import-scan@v1
         with:
           token: ${{ secrets.DEFECTDOJO_API_KEY }}
-          defectdojo_url: ${{ secrets.DEFECTDOJO_URL }}
+          defectdojo_url: "http://3.135.211.4:8080"
           file: results/checkov-results.json
           scan_type: Checkov Scan
           engagement: ${{ secrets.DEFECTDOJO_ENGAGEMENT_ID }}
@@ -53,7 +53,7 @@ jobs:
         uses: ivanamat/defectdojo-import-scan@v1
         with:
           token: ${{ secrets.DEFECTDOJO_API_KEY }}
-          defectdojo_url: ${{ secrets.DEFECTDOJO_URL }}
+          defectdojo_url: "http://3.135.211.4:8080"
           file: results/gitleaks-report.json
           scan_type: Gitleaks Scan
           engagement: ${{ secrets.DEFECTDOJO_ENGAGEMENT_ID }}
