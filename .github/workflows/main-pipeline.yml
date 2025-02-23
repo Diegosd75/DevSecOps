@@ -107,7 +107,7 @@ jobs:
 
       - name: Obtener Product ID manualmente
         run: |
-          PRODUCT_ID=<REEMPLAZA_CON_EL_ID_DEL_PRODUCTO>
+          PRODUCT_ID=1
           echo "PRODUCT_ID=$PRODUCT_ID" >> $GITHUB_ENV
           sleep 2
 
