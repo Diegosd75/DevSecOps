@@ -38,31 +38,11 @@ jobs:
             echo "✅ Archivo encontrado, procediendo con la carga."
           fi
 
-      - name: Verificar conexión con DefectDojo
+      - name: Obtener Product ID manualmente
         run: |
-          curl -X GET "http://3.135.211.4:8080/api/v2/products/" \
-            -H "Authorization: Token 1c6dca9f2b8f4c73c23564e9ccdb20f356f2f580" \
-            -H "Accept: application/json"
-
-      - name: Obtener Product ID
-        run: |
-          PRODUCT_ID=$(curl -s -X GET "http://3.135.211.4:8080/api/v2/products/" \
-            -H "Authorization: Token 1c6dca9f2b8f4c73c23564e9ccdb20f356f2f580" \
-            -H "Accept: application/json" | jq -r '.results[0].id')
-          if [ -z "$PRODUCT_ID" ] || [ "$PRODUCT_ID" == "null" ]; then
-            echo "⚠️ No se encontró un producto, creando uno nuevo."
-            RESPONSE=$(curl -s -X POST "http://3.135.211.4:8080/api/v2/products/" \
-              -H "Authorization: Token 1c6dca9f2b8f4c73c23564e9ccdb20f356f2f580" \
-              -H "Content-Type: application/json" \
-              -d '{"name": "Producto Automático", "description": "Producto creado desde pipeline", "prod_type": 1}')
-            PRODUCT_ID=$(echo $RESPONSE | jq -r '.id')
-          fi
-          if [ -z "$PRODUCT_ID" ] || [ "$PRODUCT_ID" == "null" ]; then
-            echo "❌ Error: No se pudo obtener o crear un Product ID válido."
-            exit 1
-          fi
+          PRODUCT_ID=1
           echo "PRODUCT_ID=$PRODUCT_ID" >> $GITHUB_ENV
-          sleep 5
+          sleep 2
 
       - name: Crear Engagement si no existe
         run: |
