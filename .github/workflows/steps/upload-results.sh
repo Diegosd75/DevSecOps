@@ -26,15 +26,26 @@ if [[ "$ENGAGEMENT_RESPONSE" != *"$ENGAGEMENT_NAME"* ]]; then
   exit 1
 fi
 
+# Definir nombres correctos de scan_type
+declare -A SCAN_TYPES
+SCAN_TYPES=(
+  [checkov-results.json]="SAST"
+  [nuclei-results.txt]="DAST"
+  [gitleaks-report.json]="Secrets Scan"
+  [trivy-results.json]="Container Scan"
+  [dependency-check-report.xml]="Dependency Check"
+  [bearer-results.json]="SAST"
+)
+
 # Subir los resultados de los escaneos a DefectDojo
-for file in checkov-results.json nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
+for file in "${!SCAN_TYPES[@]}"; do
   if [ -f "results/$file" ]; then
-    scan_type=$(echo "$file" | sed 's/-results.*//g' | sed 's/.json//g' | sed 's/.txt//g' | sed 's/.xml//g' | tr '-' ' ' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
-    echo "Uploading $file as $scan_type Scan"
+    scan_type="${SCAN_TYPES[$file]}"
+    echo "Uploading $file as $scan_type"
     response=$(curl -s -X POST "$DEFECTDOJO_URL/import-scan/" \
       -H "Authorization: Token $DEFECTDOJO_API_KEY" \
       -H "Content-Type: multipart/form-data" \
-      -F "scan_type=$scan_type Scan" \
+      -F "scan_type=$scan_type" \
       -F "product_name=$PRODUCT_NAME" \
       -F "engagement_name=$ENGAGEMENT_NAME" \
       -F "file=@results/$file" -v)
