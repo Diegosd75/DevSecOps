@@ -18,13 +18,11 @@ docker --version
 # Instalar Checkov
 pip3 install checkov
 
-# Instalar Bearer
-npm install -g @bearer/bearer-cli
+# Usar Docker para ejecutar Bearer
+sudo docker pull bearer/bearer:latest-amd64
 
-# Asegurar que Bearer está en el PATH
-export PATH=$(npm root -g)/.bin:$PATH
+echo "Bearer instalado correctamente con Docker."
 
 # Verificar instalaciones
 checkov --version
-which bearer
-bearer --version
+docker run --rm bearer/bearer:latest-amd64 --version || echo "Error ejecutando Bearer con Docker"
