@@ -26,116 +26,25 @@ jobs:
           chmod -R 777 results
 
       - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get remove -y containerd.io docker.io || true
-          sudo apt-get install -y golang jq curl pre-commit
+        uses: ./.github/workflows/steps/setup-dependencies.yml
 
-      - name: Install Docker CE
-        run: |
-          curl -fsSL https://get.docker.com | sudo sh
-          sudo usermod -aG docker $USER
-          newgrp docker
-          docker --version
-
-      - name: Install Nuclei
-        run: |
-          go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
-          sudo cp ~/go/bin/nuclei /usr/local/bin/nuclei
-          nuclei --version
-
-      - name: Run Gitleaks (Secret Scan) Using Container
-        run: |
-          docker run --rm -v $(pwd):/path zricethezav/gitleaks:latest detect --source=/path --verbose \
-            --report-format=json --report-path=/path/results/gitleaks-report.json || true
-
-      - name: Configure Pre-Commit Hook
-        run: |
-          echo "repos:
-          -   repo: https://github.com/gitleaks/gitleaks
-              rev: v8.16.0
-              hooks:
-              -   id: gitleaks
-          " > .pre-commit-config.yaml
-          pre-commit install
-          pre-commit run --all-files || true
-
-      - name: Install Dependency Check
-        run: |
-          wget https://github.com/jeremylong/DependencyCheck/releases/download/v8.4.0/dependency-check-8.4.0-release.zip
-          unzip dependency-check-8.4.0-release.zip
-          sudo mv dependency-check /usr/local/bin/
-          /usr/local/bin/dependency-check/bin/dependency-check.sh --version
+      - name: Run Gitleaks (Secret Scan)
+        uses: ./.github/workflows/steps/security-scans/gitleaks-scan.yml
 
       - name: Run Checkov (IaC Scan)
-        uses: bridgecrewio/checkov-action@v12
-        with:
-          directory: .
-          output_format: json
-          output_file_path: results/checkov-results.json
-        continue-on-error: true
+        uses: ./.github/workflows/steps/security-scans/checkov-scan.yml
 
       - name: Run Nuclei (DAST Scan)
-        run: |
-          nuclei -u https://example.com -o results/nuclei-results.txt || true
-
-      - name: Build Docker Image for Trivy Scan
-        run: |
-          docker build -t vulnerable-image:latest . || true
+        uses: ./.github/workflows/steps/security-scans/nuclei-scan.yml
 
       - name: Run Trivy (Container Scan)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'vulnerable-image:latest'
-          format: 'json'
-          output: 'results/trivy-results.json'
-        continue-on-error: true
+        uses: ./.github/workflows/steps/security-scans/trivy-scan.yml
 
       - name: Run Dependency Check (SCA)
-        run: |
-          /usr/local/bin/dependency-check/bin/dependency-check.sh --scan . --format XML --out results/dependency-check-report.xml || touch results/dependency-check-report.xml
-        continue-on-error: true
+        uses: ./.github/workflows/steps/security-scans/dependency-check.yml
 
       - name: Run Bearer (SAST Scan)
-        uses: bearer/bearer-action@v2
-        with:
-          output: results/bearer-results.json
-        continue-on-error: true
-
-      - name: Validate Scan Outputs
-        run: |
-          missing_files=0
-          for file in checkov-results.json nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
-            if [ ! -s results/$file ]; then
-              echo "❌ Error: El archivo results/$file no fue generado o está vacío."
-              missing_files=1
-            else
-              echo "✅ Archivo results/$file generado exitosamente."
-            fi
-          done
-          if [ $missing_files -eq 1 ]; then
-            echo "❌ Error crítico: No todos los escaneos generaron sus archivos."
-            exit 1
-          fi
+        uses: ./.github/workflows/steps/security-scans/bearer-scan.yml
 
       - name: Upload Scan Results to DefectDojo
-        run: |
-          for file in checkov-results.json nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
-            scan_type=$(echo "$file" | sed 's/-results.*//g' | sed 's/.json//g' | sed 's/.txt//g' | sed 's/.xml//g' | tr '-' ' ' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
-            echo "Uploading $file as $scan_type Scan"
-            response=$(curl -X POST "http://3.17.138.240:8080/api/v2/import-scan/" \
-              -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
-              -H "Content-Type: multipart/form-data" \
-              -F "scan_type=$scan_type Scan" \
-              -F "product_name=DevSecOps" \
-              -F "file=@results/$file")
-            echo "Response: $response"
-            if [[ "$response" == *"error"* ]]; then
-              echo "❌ Error al subir $file a DefectDojo."
-              exit 1
-            fi
-          done
-
-      - name: Confirmar éxito de importación
-        run: |
-          echo "✅ Todos los archivos de escaneo fueron generados y subidos exitosamente a DefectDojo."
+        uses: ./.github/workflows/steps/upload-results.yml
