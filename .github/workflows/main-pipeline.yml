@@ -28,7 +28,15 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y golang jq docker.io
+          sudo apt-get remove -y containerd.io docker.io || true
+          sudo apt-get install -y golang jq
+
+      - name: Install Docker CE
+        run: |
+          curl -fsSL https://get.docker.com | sudo sh
+          sudo usermod -aG docker $USER
+          newgrp docker
+          docker --version
 
       - name: Install Nuclei
         run: |
