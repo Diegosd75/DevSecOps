@@ -21,6 +21,10 @@ pip3 install checkov
 # Instalar Bearer
 npm install -g @bearer/bearer-cli
 
+# Asegurar que Bearer está en el PATH
+export PATH=$(npm root -g)/.bin:$PATH
+
 # Verificar instalaciones
 checkov --version
+which bearer
 bearer --version
