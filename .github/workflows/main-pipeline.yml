@@ -28,7 +28,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y golang jq
+          sudo apt-get install -y golang jq docker.io
 
       - name: Install Nuclei
         run: |
@@ -44,30 +44,18 @@ jobs:
           output_file_path: results/checkov-results.json
         continue-on-error: true
 
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y golang jq
-
-      - name: Install Nuclei
-        run: |
-          go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
-          sudo cp ~/go/bin/nuclei /usr/local/bin/nuclei
-
       - name: Run Nuclei (DAST Scan)
         run: |
           nuclei -u https://example.com -o results/nuclei-results.txt || true
 
-
       - name: Run Gitleaks (Secret Scan)
-        uses: gitleaks/gitleaks-action@v2.3.7
-        with:
-          config: .gitleaks.toml
-          report-format: json
-          report-path: results/gitleaks-report.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
+        run: |
+          gitleaks detect --source . --verbose || true
+          gitleaks detect --source . --report-format=json --report-path=results/gitleaks-report.json || touch results/gitleaks-report.json
+
+      - name: Build Docker Image for Trivy Scan
+        run: |
+          docker build -t vulnerable-image:latest . || true
 
       - name: Run Trivy (Container Scan)
         uses: aquasecurity/trivy-action@master
@@ -78,13 +66,12 @@ jobs:
         continue-on-error: true
 
       - name: Run Dependency Check (SCA)
-        uses: dependency-check/Dependency-Check_Action@main
-        with:
-          format: 'XML'
-          out: 'results/dependency-check-report.xml'
+        run: |
+          dependency-check --version
+          dependency-check --scan . --format XML --out results/dependency-check-report.xml || touch results/dependency-check-report.xml
         continue-on-error: true
 
-      - name: Run Bearer   (SAST Scan)
+      - name: Run Bearer (SAST Scan)
         uses: bearer/bearer-action@v2
         with:
           output: results/bearer-results.json
