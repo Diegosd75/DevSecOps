@@ -123,7 +123,7 @@ jobs:
           for file in checkov-results.json nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
             scan_type=$(echo "$file" | sed 's/-results.*//g' | sed 's/.json//g' | sed 's/.txt//g' | sed 's/.xml//g' | tr '-' ' ' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
             echo "Uploading $file as $scan_type Scan"
-            response=$(curl -X POST "http://3.135.211.4:8080/api/v2/import-scan/" \
+            response=$(curl -X POST "http://3.17.138.240:8080/api/v2/import-scan/" \
               -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
               -H "Content-Type: multipart/form-data" \
               -F "scan_type=$scan_type Scan" \
