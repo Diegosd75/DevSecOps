@@ -44,6 +44,13 @@ jobs:
           sudo cp ~/go/bin/nuclei /usr/local/bin/nuclei
           nuclei --version
 
+      - name: Install Dependency Check
+        run: |
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v8.4.0/dependency-check-8.4.0-release.zip
+          unzip dependency-check-8.4.0-release.zip
+          sudo mv dependency-check /usr/local/bin/
+          /usr/local/bin/dependency-check/bin/dependency-check.sh --version
+
       - name: Run Checkov (IaC Scan)
         uses: bridgecrewio/checkov-action@v12
         with:
@@ -75,8 +82,7 @@ jobs:
 
       - name: Run Dependency Check (SCA)
         run: |
-          dependency-check --version
-          dependency-check --scan . --format XML --out results/dependency-check-report.xml || touch results/dependency-check-report.xml
+          /usr/local/bin/dependency-check/bin/dependency-check.sh --scan . --format XML --out results/dependency-check-report.xml || touch results/dependency-check-report.xml
         continue-on-error: true
 
       - name: Run Bearer (SAST Scan)
