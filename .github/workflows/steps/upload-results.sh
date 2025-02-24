@@ -7,6 +7,10 @@ if [ -z "$1" ]; then
 fi
 DEFECTDOJO_API_KEY="$1"
 
+# Definir engagement_name
+ENGAGEMENT_NAME="Automated Security Scan"
+PRODUCT_NAME="Repositorio_DevSecOps"
+
 # Subir los resultados de los escaneos a DefectDojo
 for file in checkov-results.json nuclei-results.txt gitleaks-report.json trivy-results.json dependency-check-report.xml bearer-results.json; do
   if [ -f "results/$file" ]; then
@@ -16,7 +20,8 @@ for file in checkov-results.json nuclei-results.txt gitleaks-report.json trivy-r
       -H "Authorization: Token $DEFECTDOJO_API_KEY" \
       -H "Content-Type: multipart/form-data" \
       -F "scan_type=$scan_type Scan" \
-      -F "product_name=DevSecOps" \
+      -F "product_name=$PRODUCT_NAME" \
+      -F "engagement_name=$ENGAGEMENT_NAME" \
       -F "file=@results/$file")
     echo "Response: $response"
     if [[ "$response" == *"error"* ]]; then
