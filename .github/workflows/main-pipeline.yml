@@ -44,14 +44,10 @@ jobs:
           sudo cp ~/go/bin/nuclei /usr/local/bin/nuclei
           nuclei --version
 
-      - name: Install Gitleaks
+      - name: Run Gitleaks (Secret Scan) Using Container
         run: |
-          GITLEAKS_VERSION=$(curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest | jq -r .tag_name)
-          wget -q "https://github.com/gitleaks/gitleaks/releases/download/$GITLEAKS_VERSION/gitleaks_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m).tar.gz" -O gitleaks.tar.gz
-          tar -xzf gitleaks.tar.gz
-          sudo mv gitleaks /usr/local/bin/gitleaks
-          chmod +x /usr/local/bin/gitleaks
-          gitleaks version
+          docker run --rm -v $(pwd):/path zricethezav/gitleaks:latest detect --source=/path --verbose \
+            --report-format=json --report-path=/path/results/gitleaks-report.json || true
 
       - name: Configure Pre-Commit Hook
         run: |
@@ -82,11 +78,6 @@ jobs:
       - name: Run Nuclei (DAST Scan)
         run: |
           nuclei -u https://example.com -o results/nuclei-results.txt || true
-
-      - name: Run Gitleaks (Secret Scan)
-        run: |
-          gitleaks detect --source . --verbose || true
-          gitleaks detect --source . --report-format=json --report-path=results/gitleaks-report.json || touch results/gitleaks-report.json
 
       - name: Build Docker Image for Trivy Scan
         run: |
