@@ -26,7 +26,7 @@ jobs:
           chmod -R 777 results
 
       - name: Install Dependencies
-        run: bash .github/workflows/step/setup-dependencies.sh
+        run: bash .github/workflows/steps/setup-dependencies.sh
 
       - name: Run Gitleaks (Secret Scan)
         run: bash .github/workflows/step/security-scans/gitleaks-scan.sh
