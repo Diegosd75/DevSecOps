@@ -46,7 +46,12 @@ jobs:
 
       - name: Install Gitleaks
         run: |
-          wget -q https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64 -O gitleaks
+          GITLEAKS_VERSION=$(curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest | jq -r .tag_name)
+          wget -q "https://github.com/gitleaks/gitleaks/releases/download/$GITLEAKS_VERSION/gitleaks-linux-amd64" -O gitleaks
+          if [ ! -f "gitleaks" ]; then
+            echo "❌ Error: No se pudo descargar Gitleaks."
+            exit 1
+          fi
           chmod +x gitleaks
           sudo mv gitleaks /usr/local/bin/
           gitleaks version
