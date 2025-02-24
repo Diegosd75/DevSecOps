@@ -1,0 +1,11 @@
+name: Nuclei DAST Scan
+
+description: Run Nuclei for Dynamic Application Security Testing
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run Nuclei
+      run: |
+        nuclei -u https://example.com -o results/nuclei-results.txt || true
+      shell: bash
