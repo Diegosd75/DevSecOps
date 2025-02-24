@@ -21,28 +21,30 @@ jobs:
           fetch-depth: 0
 
       - name: Prepare Results Directory
-        run: .github/workflows/steps/prepare-results-directory.yml
+        run: |
+          mkdir -p results
+          chmod -R 777 results
 
       - name: Install Dependencies
-        run: .github/workflows/steps/setup-dependencies.yml
+        run: bash .github/workflows/steps/setup-dependencies.sh
 
       - name: Run Gitleaks (Secret Scan)
-        run: .github/workflows/steps/security-scans/gitleaks-scan.yml
+        run: bash .github/workflows/steps/security-scans/gitleaks-scan.sh
 
       - name: Run Checkov (IaC Scan)
-        run: .github/workflows/steps/security-scans/checkov-scan.yml
+        run: bash .github/workflows/steps/security-scans/checkov-scan.sh
 
       - name: Run Nuclei (DAST Scan)
-        run: .github/workflows/steps/security-scans/nuclei-scan.yml
+        run: bash .github/workflows/steps/security-scans/nuclei-scan.sh
 
       - name: Run Trivy (Container Scan)
-        run: .github/workflows/steps/security-scans/trivy-scan.yml
+        run: bash .github/workflows/steps/security-scans/trivy-scan.sh
 
       - name: Run Dependency Check (SCA)
-        run: .github/workflows/steps/security-scans/dependency-check.yml
+        run: bash .github/workflows/steps/security-scans/dependency-check.sh
 
       - name: Run Bearer (SAST Scan)
-        run: .github/workflows/steps/security-scans/bearer-scan.yml
+        run: bash .github/workflows/steps/security-scans/bearer-scan.sh
 
       - name: Upload Scan Results to DefectDojo
-        run: .github/workflows/steps/upload-results.yml
+        run: bash .github/workflows/steps/upload-results.sh
