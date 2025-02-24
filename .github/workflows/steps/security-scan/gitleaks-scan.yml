@@ -1,0 +1,12 @@
+name: Gitleaks Secret Scan
+
+description: Run Gitleaks to detect secrets
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run Gitleaks
+      run: |
+        docker run --rm -v $(pwd):/path zricethezav/gitleaks:latest detect --source=/path --verbose \
+          --report-format=json --report-path=/path/results/gitleaks-report.json || true
+      shell: bash
