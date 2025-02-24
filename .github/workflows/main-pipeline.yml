@@ -26,25 +26,25 @@ jobs:
           chmod -R 777 results
 
       - name: Install Dependencies
-        run: bash .github/workflows/steps/setup-dependencies.sh
+        run: bash .github/workflows/step/setup-dependencies.sh
 
       - name: Run Gitleaks (Secret Scan)
-        run: bash .github/workflows/steps/security-scans/gitleaks-scan.sh
+        run: bash .github/workflows/step/security-scans/gitleaks-scan.sh
 
       - name: Run Checkov (IaC Scan)
-        run: bash .github/workflows/steps/security-scans/checkov-scan.sh
+        run: bash .github/workflows/step/security-scans/checkov-scan.sh
 
       - name: Run Nuclei (DAST Scan)
-        run: bash .github/workflows/steps/security-scans/nuclei-scan.sh
+        run: bash .github/workflows/step/security-scans/nuclei-scan.sh
 
       - name: Run Trivy (Container Scan)
-        run: bash .github/workflows/steps/security-scans/trivy-scan.sh
+        run: bash .github/workflows/step/security-scans/trivy-scan.sh
 
       - name: Run Dependency Check (SCA)
-        run: bash .github/workflows/steps/security-scans/dependency-check.sh
+        run: bash .github/workflows/step/security-scans/dependency-check.sh
 
       - name: Run Bearer (SAST Scan)
-        run: bash .github/workflows/steps/security-scans/bearer-scan.sh
+        run: bash .github/workflows/step/security-scans/bearer-scan.sh
 
       - name: Upload Scan Results to DefectDojo
-        run: bash .github/workflows/steps/upload-results.sh
+        run: bash .github/workflows/step/upload-results.sh
