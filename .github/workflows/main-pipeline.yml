@@ -46,14 +46,7 @@ jobs:
 
       - name: Install Gitleaks
         run: |
-          GITLEAKS_VERSION=$(curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest | jq -r .tag_name)
-          wget -q "https://github.com/gitleaks/gitleaks/releases/download/$GITLEAKS_VERSION/gitleaks-linux-amd64" -O gitleaks
-          if [ ! -f "gitleaks" ]; then
-            echo "❌ Error: No se pudo descargar Gitleaks."
-            exit 1
-          fi
-          chmod +x gitleaks
-          sudo mv gitleaks /usr/local/bin/
+          curl -sSL https://raw.githubusercontent.com/gitleaks/gitleaks/master/install.sh | sudo bash
           gitleaks version
 
       - name: Install Dependency Check
