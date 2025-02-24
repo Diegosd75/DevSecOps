@@ -47,4 +47,5 @@ jobs:
         run: bash .github/workflows/steps/security-scan/bearer-scan.sh
 
       - name: Upload Scan Results to DefectDojo
-        run: bash .github/workflows/steps/upload-results.sh
+        run: bash .github/workflows/steps/upload-results.sh ${{ secrets.DEFECTDOJO_API_KEY }}
+
