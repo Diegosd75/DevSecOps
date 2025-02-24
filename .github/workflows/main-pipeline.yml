@@ -127,6 +127,7 @@ jobs:
               -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
               -H "Content-Type: multipart/form-data" \
               -F "scan_type=$scan_type Scan" \
+              -F "product_name=DevSecOps" \
               -F "file=@results/$file")
             echo "Response: $response"
             if [[ "$response" == *"error"* ]]; then
