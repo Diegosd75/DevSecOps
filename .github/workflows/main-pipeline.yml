@@ -29,7 +29,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get remove -y containerd.io docker.io || true
-          sudo apt-get install -y golang jq curl
+          sudo apt-get install -y golang jq curl pre-commit
 
       - name: Install Docker CE
         run: |
@@ -52,6 +52,17 @@ jobs:
           chmod +x gitleaks
           sudo mv gitleaks /usr/local/bin/
           gitleaks version
+
+      - name: Configure Pre-Commit Hook
+        run: |
+          echo "repos:
+          -   repo: https://github.com/gitleaks/gitleaks
+              rev: v8.16.0
+              hooks:
+              -   id: gitleaks
+          " > .pre-commit-config.yaml
+          pre-commit install
+          pre-commit run --all-files || true
 
       - name: Install Dependency Check
         run: |
