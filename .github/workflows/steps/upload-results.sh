@@ -31,9 +31,9 @@ declare -A SCAN_TYPES
 SCAN_TYPES=(
   [nuclei-results.json]="Nuclei Scan"
   [gitleaks-report.json]="Gitleaks Scan"
+  [bearer-results.json]="Bearer CLI"
   [trivy-results.json]="Trivy Scan"
   [dependency-check-report.xml]="Dependency Check Scan"
-  [bearer-results.json]="Static Check"
   [checkov-results.json]="Checkov Scan"
 )
 
