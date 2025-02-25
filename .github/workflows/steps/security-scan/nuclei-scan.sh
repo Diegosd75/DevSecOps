@@ -14,7 +14,7 @@ if [ ! -f results/nuclei-results.json ] || ! jq empty results/nuclei-results.jso
   echo "{}" > results/nuclei-results.json
   echo "⚠️ Nuclei no generó un archivo válido, se creó un JSON vacío."
 fi
-
+ 
 # Mostrar contenido del archivo JSON para depuración
 echo "🔍 Contenido de results/nuclei-results.json:"
 cat results/nuclei-results.json | jq .
