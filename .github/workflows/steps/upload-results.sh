@@ -30,7 +30,7 @@ fi
 declare -A SCAN_TYPES
 SCAN_TYPES=(
   [checkov-results.json]="Checkov Scan"
-  [nuclei-results.txt]="Nuclei Scan"
+  [nuclei-results.json]="Nuclei Scan"
   [gitleaks-report.json]="Gitleaks Scan"
   [trivy-results.json]="CycloneDX Scan"
   [dependency-check-report.xml]="Dependency Check Scan"
