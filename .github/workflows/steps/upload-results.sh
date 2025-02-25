@@ -34,7 +34,7 @@ SCAN_TYPES=(
   [gitleaks-report.json]="Gitleaks Scan"
   [trivy-results.json]="Trivy Scan"
   [dependency-check-report.xml]="Dependency Check Scan"
-  [bearer-results.json]="Bearer Scan "
+  [bearer-results.json]="Static Check "
 )
 
 # Subir los resultados de los escaneos a DefectDojo
