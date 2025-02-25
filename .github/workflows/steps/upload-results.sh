@@ -26,15 +26,15 @@ if [[ "$ENGAGEMENT_RESPONSE" != *"$ENGAGEMENT_NAME"* ]]; then
   exit 1
 fi
 
-# Definir nombres correctos de scan_type
+# Definir nombres correctos de scan_type según DefectDojo
 declare -A SCAN_TYPES
 SCAN_TYPES=(
-  [checkov-results.json]="SAST"
-  [nuclei-results.txt]="DAST"
-  [gitleaks-report.json]="Secrets Scan"
-  [trivy-results.json]="Container Scan"
-  [dependency-check-report.xml]="Dependency Check"
-  [bearer-results.json]="SAST"
+  [checkov-results.json]="Checkov Scan"
+  [nuclei-results.txt]="Nuclei Scan"
+  [gitleaks-report.json]="Gitleaks Scan"
+  [trivy-results.json]="Trivy Scan"
+  [dependency-check-report.xml]="Dependency Check Scan"
+  [bearer-results.json]="Bearer Scan"
 )
 
 # Subir los resultados de los escaneos a DefectDojo
