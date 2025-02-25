@@ -24,16 +24,14 @@ sudo docker pull bearer/bearer:latest-amd64
 echo "Bearer instalado correctamente con Docker."
 
 # Instalar Trivy desde el repositorio oficial
-echo "🔍 Verificando instalación de Trivy..."
-if ! command -v trivy &> /dev/null; then
-  echo "⚠️ Trivy no encontrado. Instalando desde el repositorio oficial..."
-  sudo apt-get install -y apt-transport-https gnupg lsb-release
-  curl -fsSL https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo gpg --dearmor -o /usr/share/keyrings/trivy-keyring.gpg
-  echo "deb [signed-by=/usr/share/keyrings/trivy-keyring.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/trivy.list
-  sudo apt-get update
-  sudo apt-get install -y trivy
-  echo "✅ Trivy instalado correctamente."
-fi
+echo "Instalando Trivy..."
+sudo apt-get install -y apt-transport-https gnupg lsb-release
+curl -fsSL https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo gpg --dearmor -o /usr/share/keyrings/trivy-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/trivy-keyring.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+sudo apt-get update
+sudo apt-get install -y trivy
+
+echo "Trivy instalado correctamente."
 
 # Verificar instalaciones
 checkov --version
