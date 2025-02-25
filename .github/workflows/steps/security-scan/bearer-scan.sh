@@ -2,22 +2,19 @@
 
 # Crear directorio de resultados si no existe
 mkdir -p results
-mkdir -p results/bearer-rules
 
-# Asegurar que no existe un archivo o directorio conflictivo
-rm -rf results/bearer-results.json
-
-# Ejecutar Bearer en contenedor Docker con permisos correctos
-docker run --rm --user $(id -u):$(id -g) \
-  -v $(pwd):/src \
-  -v $(pwd)/results/bearer-rules:/tmp/bearer-rules \
-  bearer/bearer:latest-amd64 scan /src --output results/bearer-results.json --debug
+# Ejecutar Bearer dentro de un contenedor Docker asegurando que el archivo JSON se cree correctamente
+docker run --rm -v $(pwd):/src bearer/bearer scan --format json --output /src/results/bearer-results.json /src
 
 # Verificar si el archivo se generó correctamente
-if [ ! -f results/bearer-results.json ]; then
+if [ ! -f results/bearer-results.json ] || ! jq empty results/bearer-results.json 2>/dev/null; then
   echo "{}" > results/bearer-results.json
   echo "⚠️ Bearer no generó un archivo válido, se creó un JSON vacío."
 fi
+
+# Mostrar contenido del archivo JSON para depuración
+echo "🔍 Contenido de results/bearer-results.json:"
+cat results/bearer-results.json | jq .
 
 # Mensaje de confirmación
 echo "✅ Bearer scan completado. Reporte generado en results/bearer-results.json"
