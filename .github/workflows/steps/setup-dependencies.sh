@@ -28,9 +28,9 @@ echo "🔍 Verificando instalación de Trivy..."
 if ! command -v trivy &> /dev/null; then
   echo "⚠️ Trivy no encontrado. Instalando..."
   sudo apt-get install -y wget
-  wget -O trivy.tar.gz https://github.com/aquasecurity/trivy/releases/latest/download/trivy_$(uname -s)_$(uname -m).tar.gz
+  wget -O trivy.tar.gz https://github.com/aquasecurity/trivy/releases/latest/download/trivy_Linux-64bit.tar.gz
   if [ $? -ne 0 ]; then
-    echo "❌ Error: No se pudo descargar Trivy."
+    echo "❌ Error: No se pudo descargar Trivy. Verificando URL..."
     exit 1
   fi
   tar zxvf trivy.tar.gz
