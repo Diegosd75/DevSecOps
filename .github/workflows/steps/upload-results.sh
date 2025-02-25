@@ -32,14 +32,20 @@ SCAN_TYPES=(
   [checkov-results.json]="Checkov Scan"
   [nuclei-results.txt]="Nuclei Scan"
   [gitleaks-report.json]="Gitleaks Scan"
-  [trivy-results.json]="Trivy Scan"
+  [trivy-results.json]="CycloneDX Scan"
   [dependency-check-report.xml]="Dependency Check Scan"
-  [bearer-results.json]="Generic Findings Import"
+  [bearer-results.json]="SAST"
 )
 
 # Subir los resultados de los escaneos a DefectDojo
 for file in "${!SCAN_TYPES[@]}"; do
   if [ -f "results/$file" ]; then
+    # Verificar si el archivo está vacío
+    if [ ! -s "results/$file" ]; then
+      echo "⚠️ Archivo $file está vacío. Omitiendo subida."
+      continue
+    fi
+    
     scan_type="${SCAN_TYPES[$file]}"
     echo "Uploading $file as $scan_type"
     response=$(curl -s -X POST "$DEFECTDOJO_URL/import-scan/" \
@@ -51,7 +57,7 @@ for file in "${!SCAN_TYPES[@]}"; do
       -F "file=@results/$file" -v)
     echo "Response: $response"
     if [[ "$response" == *"error"* || -z "$response" ]]; then
-      echo "❌ Error al subir $file a DefectDojo. Verifica que el engagement existe."
+      echo "❌ Error al subir $file a DefectDojo. Verifica que el scan_type es correcto."
       exit 1
     fi
   else
