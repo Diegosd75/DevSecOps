@@ -23,7 +23,12 @@ echo "deb [signed-by=/usr/share/keyrings/trivy-keyring.gpg] https://aquasecurity
 sudo apt-get update
 sudo apt-get install -y trivy
 
-echo "checkov, Bearer y Trivy funcionando correctamente."
+wget https://github.com/jeremylong/DependencyCheck/releases/download/v8.4.0/dependency-check-8.4.0-release.zip
+unzip dependency-check-8.4.0-release.zip
+sudo mv dependency-check /usr/local/bin/
+/usr/local/bin/dependency-check/bin/dependency-check.sh --version
+
+echo "checkov, Dependency check, Bearer y Trivy funcionando correctamente."
 
 # Crear directorio de resultados
 mkdir -p results
