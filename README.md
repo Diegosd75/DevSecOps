@@ -28,7 +28,7 @@ DevSecOps/
 ### `.github/workflows/`
 Contiene los flujos de trabajo de integración continua (CI/CD). En particular, `main-pipeline.yml` define los pasos necesarios para ejecutar análisis de seguridad automatizados durante el desarrollo. Dentro de esta estructura, se encuentra el subdirectorio `steps/security-scan/`, que almacena los scripts necesarios para ejecutar los análisis de seguridad.
 
-### `stepsn/`
+### `steps/`
 Esta carpeta contiene los scripts específicos que se utilizan en los flujos de trabajo y la carpeta que tiene los escaneos de seguridad `security-scan/`. A continuación los script que contiene:
 
 - **`setup-dependencies.sh`**: Configuración inicial de herramientas necesarias para los escaneos de seguridad.
@@ -79,6 +79,6 @@ Analiza vulnerabilidades en imágenes de contenedores y dependencias de código,
 ### DefectDojo (Plataforma de gestion de vulnerabilidades)
 Plataforma de gestión de vulnerabilidades que centraliza los resultados de los escaneos de seguridad. Permite realizar seguimiento de hallazgos, gestionar riesgos y mejorar la visibilidad del estado de seguridad en el desarrollo. Se eligió para facilitar la organización y priorización de las vulnerabilidades detectadas en todo el proceso DevSecOps.
 
-##Conclusión
+## Conclusión
 
 Este repositorio está pensado para desarrolladores y equipos de seguridad que buscan implementar DevSecOps de manera efectiva, usando herramientas Free, asegurando que la seguridad no sea una fase adicional, sino un componente esencial del desarrollo de software.
