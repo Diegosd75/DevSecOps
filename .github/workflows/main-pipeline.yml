@@ -38,7 +38,7 @@ jobs:
         run: bash .github/workflows/steps/security-scan/nuclei-scan.sh
 
       - name: Run Trivy (Container Scan)
-        run: bash .github/workflows/steps/security-scan/trivy-scan.sh
+        run: bash .github/workflows/steps/security-scan/trivy-scan.sh ${{ vars.IMAGE_NAME }} 
 
       - name: Run Dependency Check (SCA)
         run: bash .github/workflows/steps/security-scan/dependency-check.sh
