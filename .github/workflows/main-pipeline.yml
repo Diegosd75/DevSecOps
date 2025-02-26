@@ -26,7 +26,7 @@ jobs:
           chmod -R 777 results
 
       - name: Install Dependencies
-        run: bash .github/workflows/steps/setup-dependencies.sh
+        run: bash .github/workflows/steps/setup-dependencies.sh ${{ vars.IMAGE_NAME }} 
 
       - name: Run Gitleaks (Secret Scan)
         run: bash .github/workflows/steps/security-scan/gitleaks-scan.sh
@@ -47,5 +47,5 @@ jobs:
         run: bash .github/workflows/steps/security-scan/bearer-scan.sh
 
       - name: Upload Scan Results to DefectDojo
-        run: bash .github/workflows/steps/upload-results.sh ${{ secrets.DEFECTDOJO_API_KEY }} ${{ env.ENGAGEMENT_NAME }} ${{ env.PRODUCT_NAME }} ${{ env.DEFECTDOJO_URL }}
+        run: bash .github/workflows/steps/upload-results.sh ${{ secrets.DEFECTDOJO_API_KEY }} ${{ vars.ENGAGEMENT_NAME }} ${{ vars.PRODUCT_NAME }} ${{ vars.DEFECTDOJO_URL }}
 
