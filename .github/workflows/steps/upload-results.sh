@@ -2,9 +2,9 @@
 
 #Capturar variables
 DEFECTDOJO_API_KEY="$1"
-ENGAGEMENT_NAME="Automated Security Scan"
-PRODUCT_NAME="Repositorio_DevSecOps"
-DEFECTDOJO_URL="http://18.220.221.176:8080/api/v2"
+ENGAGEMENT_NAME="$2"
+PRODUCT_NAME="$3"
+DEFECTDOJO_URL="$4"
 
 
 
